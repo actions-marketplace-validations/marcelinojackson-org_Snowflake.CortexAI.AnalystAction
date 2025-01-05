@@ -34,6 +34,8 @@ inputs:
 outputs:
   result-json:
     description: "Stringified JSON response from Cortex Analyst."
+  generated-sql:
+    description: "Generated SQL text when include-sql=true and the service returns it."
 runs:
   using: "node20"
   main: "dist/snowflake-cortex-analyst.js"
