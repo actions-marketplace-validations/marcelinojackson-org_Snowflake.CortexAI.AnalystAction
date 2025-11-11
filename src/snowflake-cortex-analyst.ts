@@ -34,6 +34,13 @@ async function main(): Promise<void> {
     }
     console.log('Response JSON:', JSON.stringify(result.response, null, 2));
 
+    const generatedSql = extractSqlFromResponse(result.response);
+    if (generatedSql) {
+      console.log('Generated SQL:');
+      console.log(generatedSql);
+      core.setOutput('generated-sql', generatedSql);
+    }
+
     core.setOutput('result-json', JSON.stringify(result.response));
   } catch (error) {
     console.error('Cortex Analyst query failed:');
@@ -99,3 +106,42 @@ function parseMessages(rawMessages?: string, singleMessage?: string): CortexAnal
 }
 
 void main();
+
+function extractSqlFromResponse(payload: unknown): string | undefined {
+  if (!payload || payload === null) {
+    return undefined;
+  }
+
+  if (typeof payload === 'string') {
+    return payload.trim() ? payload : undefined;
+  }
+
+  if (Array.isArray(payload)) {
+    for (const item of payload) {
+      const found = extractSqlFromResponse(item);
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
+  }
+
+  if (typeof payload === 'object') {
+    const record = payload as Record<string, unknown>;
+    const directSql = record.sql ?? record.generated_sql ?? record.generatedSql;
+    if (typeof directSql === 'string' && directSql.trim().length > 0) {
+      return directSql.trim();
+    }
+    if (record.response) {
+      const nested = extractSqlFromResponse(record.response);
+      if (nested) {
+        return nested;
+      }
+    }
+    if (record.data) {
+      return extractSqlFromResponse(record.data);
+    }
+  }
+
+  return undefined;
+}

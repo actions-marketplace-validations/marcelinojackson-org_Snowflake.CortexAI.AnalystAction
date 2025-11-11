@@ -56,8 +56,12 @@ GitHub Action that sends natural-language questions to Snowflake Cortex Analyst 
     SNOWFLAKE_ACCOUNT_URL: ${{ secrets.SNOWFLAKE_ACCOUNT_URL }}
     SNOWFLAKE_PAT: ${{ secrets.SNOWFLAKE_PAT }}
 
-- name: View response
-  run: echo '${{ steps.analyst.outputs.result-json }}' | jq .
+- name: View response + SQL
+  run: |
+    echo "Generated SQL:"
+    echo '${{ steps.analyst.outputs.generated-sql }}'
+    echo "JSON response:"
+    echo '${{ steps.analyst.outputs.result-json }}' | jq .
 ```
 
 Setting `include-sql: true` with `result-format: json` tells Cortex Analyst to return the generated statement (`response.sql`) **and** execute it, so `result-json` contains both the SQL text and the actual row set.
@@ -65,3 +69,4 @@ Setting `include-sql: true` with `result-format: json` tells Cortex Analyst to r
 ## Outputs
 
 - `result-json`: stringified JSON response returned by Cortex Analyst.
+- `generated-sql`: populated when `include-sql: true` and Cortex Analyst returns the generated statement.
